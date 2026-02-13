@@ -1,145 +1,117 @@
-const gifStages = [
-    "https://media.tenor.com/EBV7OT7ACfwAAAAj/u-u-qua-qua-u-quaa.gif",    // 0 normal
-    "https://media1.tenor.com/m/uDugCXK4vI4AAAAd/chiikawa-hachiware.gif",  // 1 confused
-    "https://media.tenor.com/f_rkpJbH1s8AAAAj/somsom1012.gif",             // 2 pleading
-    "https://media.tenor.com/OGY9zdREsVAAAAAj/somsom1012.gif",             // 3 sad
-    "https://media1.tenor.com/m/WGfra-Y_Ke0AAAAd/chiikawa-sad.gif",       // 4 sadder
-    "https://media.tenor.com/CivArbX7NzQAAAAj/somsom1012.gif",             // 5 devastated
-    "https://media.tenor.com/5_tv1HquZlcAAAAj/chiikawa.gif",               // 6 very devastated
-    "https://media1.tenor.com/m/uDugCXK4vI4AAAAC/chiikawa-hachiware.gif"  // 7 crying runaway
-]
+const yesBtn = document.getElementById("yesBtn");
+const noBtn = document.getElementById("noBtn");
+const question = document.getElementById("question");
+const subline = document.getElementById("subline");
+const gif = document.getElementById("gif");
 
-const noMessages = [
-    "No",
-    "Are you positive? 🤔",
-    "Pookie please... 🥺",
-    "If you say no, I will be really sad...",
-    "I will be very sad... 😢",
-    "Please??? 💔",
-    "Don't do this to me...",
-    "Last chance! 😭",
-    "You can't catch me anyway 😜"
-]
+const music = document.getElementById("bgMusic");
+const progressEl = document.getElementById("progress");
 
-const yesTeasePokes = [
-    "try saying no first... I bet you want to know what happens 😏",
-    "go on, hit no... just once 👀",
-    "you're missing out 😈",
-    "click no, I dare you 😏"
-]
+const musicBtn = document.getElementById("musicBtn");
+const volume = document.getElementById("volume");
+const shareBtn = document.getElementById("shareBtn");
+const waBtn = document.getElementById("waBtn");
 
-let yesTeasedCount = 0
+const NAME = "Zehra Haque";
 
-let noClickCount = 0
-let runawayEnabled = false
-let musicPlaying = true
+let noClickCount = 0;
+let musicStarted = false;
 
-const catGif = document.getElementById('cat-gif')
-const yesBtn = document.getElementById('yes-btn')
-const noBtn = document.getElementById('no-btn')
-const music = document.getElementById('bg-music')
+const messages = [
+  `Are you sure, ${NAME}? 🥺`,
+  "Really sure? 😢",
+  "Think again 💔",
+  "Don’t break my heart 😭",
+  "Last chance 😭😭",
+  "Zehraaaa 😭❤️",
+  "I’m not giving up 😤",
+  "Fine… I’ll make it impossible 😈"
+];
 
-// Autoplay: audio starts muted (bypasses browser policy), unmute immediately
-music.muted = true
-music.volume = 0.3
-music.play().then(() => {
-    music.muted = false
-}).catch(() => {
-    // Fallback: unmute on first interaction
-    document.addEventListener('click', () => {
-        music.muted = false
-        music.play().catch(() => {})
-    }, { once: true })
-})
-
-function toggleMusic() {
-    if (musicPlaying) {
-        music.pause()
-        musicPlaying = false
-        document.getElementById('music-toggle').textContent = '🔇'
-    } else {
-        music.muted = false
-        music.play()
-        musicPlaying = true
-        document.getElementById('music-toggle').textContent = '🔊'
-    }
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
 }
 
-function handleYesClick() {
-    if (!runawayEnabled) {
-        // Tease her to try No first
-        const msg = yesTeasePokes[Math.min(yesTeasedCount, yesTeasePokes.length - 1)]
-        yesTeasedCount++
-        showTeaseMessage(msg)
-        return
-    }
-    window.location.href = 'yes.html'
+function updateProgress() {
+  const pct = clamp((noClickCount / 8) * 100, 0, 100);
+  if (progressEl) progressEl.style.width = `${pct}%`;
 }
 
-function showTeaseMessage(msg) {
-    let toast = document.getElementById('tease-toast')
-    toast.textContent = msg
-    toast.classList.add('show')
-    clearTimeout(toast._timer)
-    toast._timer = setTimeout(() => toast.classList.remove('show'), 2500)
+function moveNoButtonSafe() {
+  const btnRect = noBtn.getBoundingClientRect();
+  const padding = 12;
+
+  const maxX = window.innerWidth - btnRect.width - padding;
+  const maxY = window.innerHeight - btnRect.height - padding;
+
+  const x = clamp(Math.random() * maxX, padding, maxX);
+  const y = clamp(Math.random() * maxY, padding + 70, maxY);
+
+  noBtn.style.position = "fixed";
+  noBtn.style.left = `${x}px`;
+  noBtn.style.top = `${y}px`;
 }
 
-function handleNoClick() {
-    noClickCount++
-
-    // Cycle through guilt-trip messages
-    const msgIndex = Math.min(noClickCount, noMessages.length - 1)
-    noBtn.textContent = noMessages[msgIndex]
-
-    // Grow the Yes button bigger each time
-    const currentSize = parseFloat(window.getComputedStyle(yesBtn).fontSize)
-    yesBtn.style.fontSize = `${currentSize * 1.35}px`
-    const padY = Math.min(18 + noClickCount * 5, 60)
-    const padX = Math.min(45 + noClickCount * 10, 120)
-    yesBtn.style.padding = `${padY}px ${padX}px`
-
-    // Shrink No button to contrast
-    if (noClickCount >= 2) {
-        const noSize = parseFloat(window.getComputedStyle(noBtn).fontSize)
-        noBtn.style.fontSize = `${Math.max(noSize * 0.85, 10)}px`
-    }
-
-    // Swap cat GIF through stages
-    const gifIndex = Math.min(noClickCount, gifStages.length - 1)
-    swapGif(gifStages[gifIndex])
-
-    // Runaway starts at click 5
-    if (noClickCount >= 5 && !runawayEnabled) {
-        enableRunaway()
-        runawayEnabled = true
-    }
+function startMusic() {
+  music.volume = parseFloat(volume.value);
+  music.play().then(() => {
+    musicStarted = true;
+    musicBtn.textContent = "Pause ⏸️";
+  }).catch(() => {});
 }
 
-function swapGif(src) {
-    catGif.style.opacity = '0'
-    setTimeout(() => {
-        catGif.src = src
-        catGif.style.opacity = '1'
-    }, 200)
-}
+document.body.addEventListener("click", () => {
+  if (!musicStarted) startMusic();
+}, { once: true });
 
-function enableRunaway() {
-    noBtn.addEventListener('mouseover', runAway)
-    noBtn.addEventListener('touchstart', runAway, { passive: true })
-}
+musicBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (!musicStarted) return startMusic();
+  if (music.paused) {
+    music.play();
+    musicBtn.textContent = "Pause ⏸️";
+  } else {
+    music.pause();
+    musicBtn.textContent = "Play 🎵";
+  }
+});
 
-function runAway() {
-    const margin = 20
-    const btnW = noBtn.offsetWidth
-    const btnH = noBtn.offsetHeight
-    const maxX = window.innerWidth - btnW - margin
-    const maxY = window.innerHeight - btnH - margin
+volume.addEventListener("input", () => {
+  music.volume = parseFloat(volume.value);
+});
 
-    const randomX = Math.random() * maxX + margin / 2
-    const randomY = Math.random() * maxY + margin / 2
+shareBtn.addEventListener("click", async () => {
+  const url = window.location.href;
+  const text = `Zehra Haque 😭❤️ please answer this: ${url}`;
+  await navigator.clipboard.writeText(text);
+  alert("Copied! Send it to Zehra 😄");
+});
 
-    noBtn.style.position = 'fixed'
-    noBtn.style.left = `${randomX}px`
-    noBtn.style.top = `${randomY}px`
-    noBtn.style.zIndex = '50'
-}
+waBtn.addEventListener("click", () => {
+  const url = window.location.href;
+  const msg = `Zehra Haque 😭❤️ please answer this: ${url}`;
+  const waLink = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  window.open(waLink, "_blank");
+});
+
+noBtn.addEventListener("click", () => {
+  question.textContent = messages[Math.min(noClickCount, messages.length - 1)];
+  noClickCount++;
+  updateProgress();
+
+  const currentSize = parseFloat(getComputedStyle(yesBtn).fontSize);
+  yesBtn.style.fontSize = (currentSize + 6) + "px";
+
+  if (noClickCount >= 3) gif.src = "images/sad.gif";
+  if (noClickCount >= 6) gif.src = "images/cry.gif";
+
+  moveNoButtonSafe();
+});
+
+noBtn.addEventListener("mouseenter", () => {
+  if (noClickCount >= 3) moveNoButtonSafe();
+});
+
+yesBtn.addEventListener("click", () => {
+  window.location.href = "yes.html";
+});
