@@ -1,63 +1,41 @@
-let musicPlaying = false
+// Confetti effect
+function createConfetti() {
+  const confetti = document.createElement("div");
+  confetti.style.position = "fixed";
+  confetti.style.width = "8px";
+  confetti.style.height = "8px";
+  confetti.style.backgroundColor =
+    "hsl(" + Math.random() * 360 + ", 100%, 50%)";
+  confetti.style.top = "-10px";
+  confetti.style.left = Math.random() * window.innerWidth + "px";
+  confetti.style.zIndex = 9999;
+  document.body.appendChild(confetti);
 
-window.addEventListener('load', () => {
-    launchConfetti()
+  let fall = setInterval(() => {
+    confetti.style.top =
+      parseInt(confetti.style.top) + 5 + "px";
 
-    // Autoplay music (works since user clicked Yes to get here)
-    const music = document.getElementById('bg-music')
-    music.volume = 0.3
-    music.play().catch(() => {})
-    musicPlaying = true
-    document.getElementById('music-toggle').textContent = '🔊'
-})
-
-function launchConfetti() {
-    const colors = ['#ff69b4', '#ff1493', '#ff85a2', '#ffb3c1', '#ff0000', '#ff6347', '#fff', '#ffdf00']
-    const duration = 6000
-    const end = Date.now() + duration
-
-    // Initial big burst
-    confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { x: 0.5, y: 0.3 },
-        colors
-    })
-
-    // Continuous side cannons
-    const interval = setInterval(() => {
-        if (Date.now() > end) {
-            clearInterval(interval)
-            return
-        }
-
-        confetti({
-            particleCount: 40,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0, y: 0.6 },
-            colors
-        })
-
-        confetti({
-            particleCount: 40,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1, y: 0.6 },
-            colors
-        })
-    }, 300)
-}
-
-function toggleMusic() {
-    const music = document.getElementById('bg-music')
-    if (musicPlaying) {
-        music.pause()
-        musicPlaying = false
-        document.getElementById('music-toggle').textContent = '🔇'
-    } else {
-        music.play()
-        musicPlaying = true
-        document.getElementById('music-toggle').textContent = '🔊'
+    if (parseInt(confetti.style.top) > window.innerHeight) {
+      clearInterval(fall);
+      confetti.remove();
     }
+  }, 20);
 }
+
+setInterval(createConfetti, 120);
+
+// Floating hearts
+function createHeart(){
+  const heart = document.createElement("div");
+  heart.classList.add("heart");
+  heart.innerHTML = "💖";
+  heart.style.left = Math.random() * 100 + "vw";
+  heart.style.animationDuration = (Math.random()*3 + 3) + "s";
+  document.body.appendChild(heart);
+
+  setTimeout(() => {
+    heart.remove();
+  }, 6000);
+}
+
+setInterval(createHeart, 600);
