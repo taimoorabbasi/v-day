@@ -37,15 +37,25 @@ function updateProgress() {
   if (progressEl) progressEl.style.width = `${pct}%`;
 }
 
+function safeGif(src){
+  // If your local gif path is wrong, it will fall back to an online gif
+  gif.onerror = () => {
+    gif.onerror = null;
+    gif.src = "https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif";
+  };
+  gif.src = src;
+}
+
 function moveNoButtonSafe() {
-  const btnRect = noBtn.getBoundingClientRect();
+  const rect = noBtn.getBoundingClientRect();
   const padding = 12;
 
-  const maxX = window.innerWidth - btnRect.width - padding;
-  const maxY = window.innerHeight - btnRect.height - padding;
+  // keep inside screen + avoid topbar area
+  const maxX = window.innerWidth - rect.width - padding;
+  const maxY = window.innerHeight - rect.height - padding;
 
   const x = clamp(Math.random() * maxX, padding, maxX);
-  const y = clamp(Math.random() * maxY, padding + 70, maxY);
+  const y = clamp(Math.random() * maxY, padding + 90, maxY);
 
   noBtn.style.position = "fixed";
   noBtn.style.left = `${x}px`;
@@ -53,7 +63,8 @@ function moveNoButtonSafe() {
 }
 
 function startMusic() {
-  music.volume = parseFloat(volume.value);
+  if (!music) return;
+  music.volume = parseFloat(volume.value || "0.6");
   music.play().then(() => {
     musicStarted = true;
     musicBtn.textContent = "Pause ⏸️";
@@ -77,16 +88,22 @@ musicBtn.addEventListener("click", (e) => {
 });
 
 volume.addEventListener("input", () => {
-  music.volume = parseFloat(volume.value);
+  if (music) music.volume = parseFloat(volume.value);
 });
 
+// Copy link
 shareBtn.addEventListener("click", async () => {
   const url = window.location.href;
   const text = `Zehra Haque 😭❤️ please answer this: ${url}`;
-  await navigator.clipboard.writeText(text);
-  alert("Copied! Send it to Zehra 😄");
+  try {
+    await navigator.clipboard.writeText(text);
+    subline.textContent = "Copied ✅ Now send it to Zehra 😄";
+  } catch {
+    subline.textContent = "Copy failed 😅 Try manual copy.";
+  }
 });
 
+// WhatsApp
 waBtn.addEventListener("click", () => {
   const url = window.location.href;
   const msg = `Zehra Haque 😭❤️ please answer this: ${url}`;
@@ -94,16 +111,21 @@ waBtn.addEventListener("click", () => {
   window.open(waLink, "_blank");
 });
 
+// No button
 noBtn.addEventListener("click", () => {
   question.textContent = messages[Math.min(noClickCount, messages.length - 1)];
   noClickCount++;
   updateProgress();
 
+  // Grow yes button (smooth)
   const currentSize = parseFloat(getComputedStyle(yesBtn).fontSize);
   yesBtn.style.fontSize = (currentSize + 6) + "px";
+  yesBtn.style.padding = "14px 28px";
 
-  if (noClickCount >= 3) gif.src = "images/sad.gif";
-  if (noClickCount >= 6) gif.src = "images/cry.gif";
+  // Swap gifs (safe fallback)
+  if (noClickCount >= 6) safeGif("images/cry.gif");
+  else if (noClickCount >= 3) safeGif("images/sad.gif");
+  else safeGif("images/start.gif");
 
   moveNoButtonSafe();
 });
@@ -112,6 +134,11 @@ noBtn.addEventListener("mouseenter", () => {
   if (noClickCount >= 3) moveNoButtonSafe();
 });
 
+// Yes -> celebration page
 yesBtn.addEventListener("click", () => {
   window.location.href = "yes.html";
 });
+
+// initial
+updateProgress();
+safeGif("images
